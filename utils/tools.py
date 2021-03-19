@@ -3,6 +3,17 @@ import os
 import glob
 from PIL import Image
 
+def save_ckp(state, checkpoint_path):
+    f_path = checkpoint_path
+    torch.save(state, f_path)
+
+def load_ckp(checkpoint_fpath, model, optimizer, device):
+
+    checkpoint = torch.load(checkpoint_fpath,map_location=device)
+    model.load_state_dict(checkpoint['state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer'])
+    valid_acc = checkpoint['valid_acc'] 
+    return model, optimizer, checkpoint['epoch'], valid_acc
 
 def vis(path):
     img = Image.open(path)
