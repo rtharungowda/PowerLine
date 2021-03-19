@@ -95,7 +95,7 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer_ft.state_dict(),
                 }
-                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/eff_b3_tts_2.pt"
+                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/eff_b3_tts_2_albu.pt"
                 save_ckp(checkpoint, checkpoint_path)
 
         print()
@@ -114,14 +114,14 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
 
 def mdl(type):
     if type == "res18":
-        model_ft = models.resnet18(pretrained=True)
+        model_ft = models.resnet18(pretrained=False)
         num_ftrs = model_ft.fc.in_features
         model_ft.fc = nn.Linear(num_ftrs, 2)
 
         return model_ft
 
     elif type == "eff-b3":
-        model = EfficientNet.from_pretrained('efficientnet-b3', num_classes=2)
+        model = EfficientNet.from_name('efficientnet-b3', num_classes=2)
         return model
 
 if __name__ == '__main__':

@@ -16,6 +16,8 @@ import glob
 from PIL import Image
 import os
 
+from efficientnet_pytorch import EfficientNet
+
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def make_pred(model,path):

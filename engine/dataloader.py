@@ -13,6 +13,9 @@ from torchvision import transforms
 
 from sklearn.model_selection import train_test_split
 
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
+
 class powerline(Dataset):
     def __init__ (self, dataframe, transform):
         self.df = dataframe
@@ -23,7 +26,9 @@ class powerline(Dataset):
     
     def __getitem__(self,ind):
         x = Image.open(self.df['path'].iloc[ind])
-        x = self.tf(x)
+        # x = self.tf(x)
+        x = np.array(x)
+        x = self.tf(image=x)['image']
         y = self.df['label'].iloc[ind]
         return x, y
     
@@ -39,16 +44,25 @@ def imshow(inp):
     img = Image.fromarray(inp)
     img.save('vis.png')
 
-def loader(path,ratio):
-    df = pd.read_csv(path)
+def albu():
+    transform ={"train":A.Compose([
+                                    A.Resize(width=224, height=224),
+                                    A.Rotate(always_apply=False, p=1.0, limit=(-24, 24), interpolation=0,
+                                            border_mode=0, value=(0, 0, 0), mask_value=None),
+                                    A.HorizontalFlip(always_apply=False, p=0.5),
+                                    A.VerticalFlip(always_apply=False, p=0.5),
+                                    A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                    ToTensorV2(),
+                                ]),
+                "val":A.Compose([
+                                    A.Resize(width=224, height=224),
+                                    A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+                                    ToTensorV2()
+                                ])
+                } 
+    return transform
 
-    train_df,valid_df = train_test_split(df,stratify=df['label'],test_size=ratio,random_state=4)
-
-    dfs = {
-        'train':train_df,
-        'val' :valid_df
-    }
-
+def transformer():
     transform = {
         'train': transforms.Compose([
             transforms.Resize(224),
@@ -61,6 +75,19 @@ def loader(path,ratio):
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
     }
+    return transform
+
+def loader(path,ratio):
+    df = pd.read_csv(path)
+
+    train_df,valid_df = train_test_split(df,stratify=df['label'],test_size=ratio,random_state=4)
+
+    dfs = {
+        'train':train_df,
+        'val' :valid_df
+    }
+
+    transform = albu()
 
     img_datasets = {
         x:powerline(dfs[x],transform[x])
