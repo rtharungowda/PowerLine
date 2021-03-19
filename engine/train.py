@@ -95,7 +95,7 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer_ft.state_dict(),
                 }
-                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/eff_b3_tts_2_albu.pt"
+                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/eff_b6_tts_2_albu.pt"
                 save_ckp(checkpoint, checkpoint_path)
 
         print()
@@ -120,14 +120,22 @@ def mdl(type):
 
         return model_ft
 
+    elif type == "eff-b6":
+        model = EfficientNet.from_name('efficientnet-b6', num_classes=2)
+        return model
+
     elif type == "eff-b3":
         model = EfficientNet.from_name('efficientnet-b3', num_classes=2)
+        return model
+    
+    elif type == "dns201":
+        model = torch.hub.load('pytorch/vision:v0.9.0', 'densenet201', pretrained=False)
         return model
 
 if __name__ == '__main__':
     dataloaders,dataset_sizes = loader("/content/drive/MyDrive/competitions/recog-r2/train.csv",0.2)
 
-    model_ft = mdl("eff-b3")
+    model_ft = mdl("eff-b6")
     model_ft = model_ft.to(DEVICE)
 
     criterion = nn.CrossEntropyLoss()

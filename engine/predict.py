@@ -27,6 +27,7 @@ def make_pred(model,path):
         "image file name":[],
         "Powerline":[], 
     }
+    # files = files[:3]
     for i,f in enumerate(files):
         img = Image.open(f)
         transform = transforms.Compose([
@@ -47,10 +48,10 @@ def make_pred(model,path):
         else:
             data["Powerline"].append("YES")
 
-    df = pd.DataFrame(data,index=False)
+    df = pd.DataFrame(data)
     df.reset_index(drop=True, inplace=True)
-    df = df.drop("Unnamed: 0",axis=1)
-    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_2.csv")    
+    # df = df.drop("Unnamed: 0",axis=1)
+    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_4.csv")    
 
 def mdl(type):
     if type == "res18":
@@ -60,15 +61,23 @@ def mdl(type):
 
         return model_ft
 
+    elif type == "eff-b6":
+        model = EfficientNet.from_name('efficientnet-b6', num_classes=2)
+        return model
+
     elif type == "eff-b3":
         model = EfficientNet.from_name('efficientnet-b3', num_classes=2)
         return model
 
+    elif type == "dns201":
+        model = torch.hub.load('pytorch/vision:v0.9.0', 'densenet201', pretrained=False)
+        return model
+
 if __name__=="__main__":
-    model_ft = mdl('eff-b3')
+    model_ft = mdl('eff-b6')
 
     # optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
     optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
-    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/eff_b3_tts_2.pt", model_ft, optimizer_ft, DEVICE)
+    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/dns201_tts_2_albu.pt", model_ft, optimizer_ft, DEVICE)
     make_pred(model,"/content/drive/MyDrive/competitions/recog-r2/Data/test")
