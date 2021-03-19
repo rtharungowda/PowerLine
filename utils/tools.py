@@ -2,6 +2,44 @@ import pandas as pd
 import os
 import glob
 from PIL import Image
+import matplotlib.pyplot as plt
+
+import torch
+
+def plot(loss_p,acc_p,epochs):
+    x = [i for i in range(epochs)]
+    plt.plot(x,loss_p['train'],color='red', marker='o')
+    plt.title('Train loss')
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.grid(True) 
+    plt.savefig('/content/PowerLine/utils/train_loss.png')
+    plt.clf()
+
+    plt.plot(x, loss_p['val'],color='red', marker='o')
+    plt.title('Val loss')
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+    plt.grid(True) 
+    plt.savefig('/content/PowerLine/utils/val_loss.png')
+    plt.clf()
+    
+    #acc
+    plt.plot(x, acc_p['train'],color='red', marker='o')
+    plt.title('Train acc')
+    plt.xlabel('epochs')
+    plt.ylabel('acc')
+    plt.grid(True) 
+    plt.savefig('/content/PowerLine/utils/train_acc.png')
+    plt.clf()
+
+    plt.plot(x, acc_p['val'],color='red', marker='o')
+    plt.title('Val acc')
+    plt.xlabel('epochs')
+    plt.ylabel('acc')
+    plt.grid(True) 
+    plt.savefig('/content/PowerLine/utils/val_acc.png')
+    plt.clf()
 
 def save_ckp(state, checkpoint_path):
     f_path = checkpoint_path
@@ -51,4 +89,4 @@ def create_csv(path):
     df.to_csv('/content/drive/MyDrive/competitions/recog-r2/train.csv')
 
 if __name__=="__main__":
-    vis("/content/drive/MyDrive/competitions/recog-2/Data/train/Powerline/Powerline (1).bmp")
+    vis("/content/drive/MyDrive/competitions/recog-r2/Data/test/Check   (1).bmp")

@@ -14,16 +14,19 @@ import sys
 sys.path.insert(1,'/content/PowerLine/engine')
 from dataloader import loader
 sys.path.insert(1,'/content/PowerLine/utils')
-from tools import save_ckp
+from tools import save_ckp, plot
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 EPOCHS = 25
+# scaler = torch.cuda.amp.GradScaler()
 
-def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
+def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epochs=25):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
+    loss_p = {'train':[],'val':[]}
+    acc_p = {'train':[],'val':[]}
 
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -58,15 +61,24 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+                        # scaler.scale(loss).backward()
+                        # scaler.step(optimizer)
+                        # scaler.update()
 
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+
+                print("running loss ",running_loss)
+
             if phase == 'train':
                 scheduler.step()
 
             epoch_loss = running_loss / dataset_sizes[phase]
             epoch_acc = running_corrects.double() / dataset_sizes[phase]
+
+            loss_p[phase].append(epoch_loss)
+            acc_p[phase].append(epoch_acc)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(
                 phase, epoch_loss, epoch_acc))
@@ -85,6 +97,9 @@ def train_model(model, criterion, optimizer, scheduler, num_epochs=25):
 
     # load best model weights
     model.load_state_dict(best_model_wts)
+
+    plot(loss_p,acc_p,num_epochs)
+
     return model, best_acc
 
 if __name__ == '__main__':
@@ -104,12 +119,13 @@ if __name__ == '__main__':
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
 
-    model_ft, best_ac = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,
-                       num_epochs=EPOCHS)
+    model_ft, best_acc = train_model(model_ft, criterion, optimizer_ft, exp_lr_scheduler,dataset_sizes,num_epochs=EPOCHS)
 
     checkpoint = {
                     'epoch': EPOCHS,
                     'valid_acc': best_acc,
                     'state_dict': model_ft.state_dict(),
-                    'optimizer': optimizer.state_dict(),
+                    'optimizer': optimizer_ft.state_dict(),
                 }
+    checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/resnet18_tts_2.pt"
+    save_ckp(checkpoint, checkpoint_path)

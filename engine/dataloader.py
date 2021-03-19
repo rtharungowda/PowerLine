@@ -35,7 +35,7 @@ def imshow(inp):
     inp = std * inp + mean
     inp = np.clip(inp, 0, 1)*255
     inp = inp.astype(np.uint8)
-    print(inp)
+    # print(inp)
     img = Image.fromarray(inp)
     img.save('vis.png')
 
@@ -69,6 +69,8 @@ def loader(path,ratio):
 
     dataset_sizes = {x: len(img_datasets[x]) for x in ['train', 'val']}
 
+    print(dataset_sizes)
+
     dataloaders = {
         x: DataLoader(img_datasets[x], batch_size=16,shuffle=True, num_workers=2)
         for x in ['train', 'val']}
@@ -77,9 +79,9 @@ def loader(path,ratio):
     inputs, classes = next(iter(dataloaders['train']))
 
     # Make a grid from batch
-    out = torchvision.utils.make_grid(inputs)
+    # out = torchvision.utils.make_grid(inputs)
 
-    imshow(out)
+    # imshow(out)
 
     return dataloaders,dataset_sizes
 
