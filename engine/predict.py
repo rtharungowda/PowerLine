@@ -50,12 +50,23 @@ def make_pred(model,path):
     df = df.drop("Unnamed: 0",axis=1)
     df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_2.csv")    
 
-if __name__=="__main__":
-    model_ft = models.resnet18(pretrained=False)
-    num_ftrs = model_ft.fc.in_features
-    
-    model_ft.fc = nn.Linear(num_ftrs, 2)
+def mdl(type):
+    if type == "res18":
+        model_ft = models.resnet18(pretrained=False)
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_ftrs, 2)
 
-    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
-    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/resnet18_tts_2.pt", model_ft, optimizer_ft, DEVICE)
+        return model_ft
+
+    elif type == "eff-b3":
+        model = EfficientNet.from_name('efficientnet-b3', num_classes=2)
+        return model
+
+if __name__=="__main__":
+    model_ft = mdl('eff-b3')
+
+    # optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
+
+    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/eff_b3_tts_2.pt", model_ft, optimizer_ft, DEVICE)
     make_pred(model,"/content/drive/MyDrive/competitions/recog-r2/Data/test")
