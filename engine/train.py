@@ -11,6 +11,7 @@ import os
 import copy
 
 from efficientnet_pytorch import EfficientNet
+import pretrainedmodels
 
 import sys
 sys.path.insert(1,'/content/PowerLine/engine')
@@ -19,7 +20,7 @@ sys.path.insert(1,'/content/PowerLine/utils')
 from tools import save_ckp, plot
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-EPOCHS = 25
+EPOCHS = 75
 # scaler = torch.cuda.amp.GradScaler()
 
 def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epochs=25):
@@ -95,7 +96,7 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
                     'state_dict': model.state_dict(),
                     'optimizer': optimizer_ft.state_dict(),
                 }
-                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/eff_b6_tts_2_albu.pt"
+                checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2//content/drive/MyDrive/competitions/recog-r2/rsnxt50_tts_2_albu_50.pt"
                 save_ckp(checkpoint, checkpoint_path)
 
         print()
@@ -132,17 +133,23 @@ def mdl(type):
         model = torch.hub.load('pytorch/vision:v0.9.0', 'densenet201', pretrained=False)
         return model
 
+    elif type == "rsnxt-50":
+        model = pretrainedmodels.__dict__[
+            "se_resnext50_32x4d"
+        ](num_classes=2,pretrained=None)
+        return model
+
 if __name__ == '__main__':
     dataloaders,dataset_sizes = loader("/content/drive/MyDrive/competitions/recog-r2/train.csv",0.2)
 
-    model_ft = mdl("eff-b6")
+    model_ft = mdl("rsnxt-50")
     model_ft = model_ft.to(DEVICE)
 
     criterion = nn.CrossEntropyLoss()
 
     # Observe that all parameters are being optimized
-    # optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
-    optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
+    optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
+    # optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
     # Decay LR by a factor of 0.1 every 7 epochs
     exp_lr_scheduler = lr_scheduler.StepLR(optimizer_ft, step_size=7, gamma=0.1)
