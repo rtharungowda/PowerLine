@@ -18,6 +18,9 @@ import time
 import os
 import copy
 
+import glob
+import pandas as pd
+
 from efficientnet_pytorch import EfficientNet
 import pretrainedmodels
 
@@ -132,9 +135,11 @@ def train_model(model, model1,model2,model3, criterion, optimizer, scheduler, da
 
     return model, best_acc
 
-def make_pred(model,path):
+def make_pred(model1,model2,model3,path):
     files = glob.glob(path+'/*.bmp')
-    model.eval()
+    model1.eval()
+    model2.eval()
+    model3.eval()
     data = {
         "image file name":[],
         "Powerline":[], 
@@ -147,11 +152,14 @@ def make_pred(model,path):
             transforms.ToTensor(),
             transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
             ])
-        new_img = transform(img).unsqueeze(0)
-        mew_img = new_img.to(DEVICE)
+        new_img = transform(img).unsqueeze(0).to(DEVICE)
+        # mew_img = new_img.to(DEVICE)
         with torch.no_grad():
-            outputs = model(new_img)
-            _, preds = torch.max(outputs,1)
+            output1 = model1(new_img)
+            output2 = model2(new_img)
+            output3 = model3(new_img)
+            ot = 0.05*output1+0.05*output2+0.9*output3
+            _, preds = torch.max(ot,1)
         file_name = os.path.basename(f)
         print(i,file_name)
         data["image file name"].append(file_name)
@@ -163,7 +171,7 @@ def make_pred(model,path):
     df = pd.DataFrame(data)
     df.reset_index(drop=True, inplace=True)
     # df = df.drop("Unnamed: 0",axis=1)
-    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_4.csv")    
+    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/ens_2_weighted.csv", index=False, header=True)    
 
 def mdl(type):
     if type == "res18":
@@ -197,7 +205,7 @@ def mdl(type):
         return model
 
 if __name__=="__main__":
-    dataloaders,dataset_sizes = loader("/content/drive/MyDrive/competitions/recog-r2/train.csv",0.2)
+    # dataloaders,dataset_sizes = loader("/content/drive/MyDrive/competitions/recog-r2/train.csv",0.2)
     model1 = mdl('eff-b6')
     model2 = mdl('eff-b3')
     model3 = mdl('res18')
@@ -215,11 +223,13 @@ if __name__=="__main__":
     model2.to(DEVICE)
     model3.to(DEVICE)
 
-    mdl = Ens(3).to(DEVICE)
-    optimizer = optim.Adam(mdl.parameters(), lr=0.001)
-    criterion = nn.CrossEntropyLoss()
-    exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+    make_pred(model1,model2,model3,"/content/drive/MyDrive/competitions/recog-r2/Data/test")
 
-    model_ft, best_acc = train_model(mdl, model1,model2,model3, criterion, optimizer, exp_lr_scheduler,dataset_sizes,num_epochs=EPOCHS)
+    # mdl = Ens(3).to(DEVICE)
+    # optimizer = optim.Adam(mdl.parameters(), lr=0.001)
+    # criterion = nn.CrossEntropyLoss()
+    # exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+
+    # model_ft, best_acc = train_model(mdl, model1,model2,model3, criterion, optimizer, exp_lr_scheduler,dataset_sizes,num_epochs=EPOCHS)
     # mdl = Ens(3)
     

@@ -122,7 +122,7 @@ def mdl(type):
         return model_ft
     
     elif type == "res50":
-        model_ft = models.resnet50(pretrained=False)
+        model_ft = models.resnet50(pretrained=True)
         num_ftrs = model_ft.fc.in_features
         model_ft.fc = nn.Linear(num_ftrs, 2)
 
