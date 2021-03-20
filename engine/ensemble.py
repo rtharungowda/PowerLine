@@ -1,6 +1,6 @@
 import sys
 sys.path.insert(1,'/content/PowerLine/utils')
-from tools import load_ckp
+from tools import load_ckp,save_ckp
 
 import sys
 sys.path.insert(1,'/content/PowerLine/engine')
