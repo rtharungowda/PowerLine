@@ -27,7 +27,7 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
-    best_acc = 0.0
+    best_acc = 0.9660
     loss_p = {'train':[],'val':[]}
     acc_p = {'train':[],'val':[]}
 
@@ -122,7 +122,7 @@ def mdl(type):
         return model_ft
     
     elif type == "res50":
-        model_ft = models.resnet50(pretrained=True)
+        model_ft = models.resnet50(pretrained=False)
         num_ftrs = model_ft.fc.in_features
         model_ft.fc = nn.Linear(num_ftrs, 2)
 

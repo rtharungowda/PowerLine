@@ -51,11 +51,18 @@ def make_pred(model,path):
     df = pd.DataFrame(data)
     df.reset_index(drop=True, inplace=True)
     # df = df.drop("Unnamed: 0",axis=1)
-    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_4.csv")    
+    df.to_csv("/content/drive/MyDrive/competitions/recog-r2/submit_ens_3.csv")    
 
 def mdl(type):
     if type == "res18":
         model_ft = models.resnet18(pretrained=False)
+        num_ftrs = model_ft.fc.in_features
+        model_ft.fc = nn.Linear(num_ftrs, 2)
+
+        return model_ft
+    
+    elif type == "res50":
+        model_ft = models.resnet50(pretrained=False)
         num_ftrs = model_ft.fc.in_features
         model_ft.fc = nn.Linear(num_ftrs, 2)
 
@@ -74,10 +81,10 @@ def mdl(type):
         return model
 
 if __name__=="__main__":
-    model_ft = mdl('eff-b6')
+    model_ft = mdl('res50')
 
     # optimizer_ft = optim.SGD(model_ft.parameters(), lr=0.001, momentum=0.9)
     optimizer_ft = optim.Adam(model_ft.parameters(), lr=0.001)
 
-    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/dns201_tts_2_albu.pt", model_ft, optimizer_ft, DEVICE)
+    model, _, epoch, val_acc = load_ckp("/content/drive/MyDrive/competitions/recog-r2/rses50_tts_2_albu.pt", model_ft, optimizer_ft, DEVICE)
     make_pred(model,"/content/drive/MyDrive/competitions/recog-r2/Data/test")
