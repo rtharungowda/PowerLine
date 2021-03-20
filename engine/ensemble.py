@@ -14,25 +14,28 @@ import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
 import matplotlib.pyplot as plt
-
-import pandas as pd
-import glob
-from PIL import Image
+import time
 import os
+import copy
 
 from efficientnet_pytorch import EfficientNet
+import pretrainedmodels
+
+from PIL import Image
 
 DEVICE = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+EPOCHS = 25
 
 class Ens(nn.Module):
-        def __inti__(self,input):
-            self.l1 = nn.Linear(input,16)
-            self.l2 = nn.Linear(16,2)
-        
-        def forward(self,x):
-            return self.l2(self.l1(x))
+    def __init__(self,input):
+        super(Ens,self).__init__()
+        self.l1 = nn.Linear(2*input,16)
+        self.l2 = nn.Linear(16,2)
+    
+    def forward(self,x):
+        return self.l2(self.l1(x))
 
-def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epochs=25):
+def train_model(model, model1,model2,model3, criterion, optimizer, scheduler, dataset_sizes, num_epochs=25):
     since = time.time()
 
     best_model_wts = copy.deepcopy(model.state_dict())
@@ -59,23 +62,20 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
+            for inputs, labels in dataloaders["train"]:
                 inputs = inputs.to(DEVICE)
                 labels = labels.to(DEVICE)
-
-                # zero the parameter gradients
-                optimizer.zero_grad()
-
-
+            
                 with torch.no_grad():
                     output1 = model1(inputs)
                     output2 = model2(inputs)
                     output3 = model3(inputs)
+                ot = torch.cat([output1,output2,output3],dim=1)
 
                 # forward
                 # track history if only in train
                 with torch.set_grad_enabled(phase == 'train'):
-                    outputs = model(inputs)
+                    outputs = model(ot)
                     _, preds = torch.max(outputs, 1)
                     loss = criterion(outputs, labels)
 
@@ -113,7 +113,7 @@ def train_model(model, criterion, optimizer, scheduler, dataset_sizes, num_epoch
                     'epoch': epoch,
                     'valid_acc': best_acc,
                     'state_dict': model.state_dict(),
-                    'optimizer': optimizer_ft.state_dict(),
+                    'optimizer': optimizer.state_dict(),
                 }
                 checkpoint_path = "/content/drive/MyDrive/competitions/recog-r2/ens_1.pt"
                 save_ckp(checkpoint, checkpoint_path)
@@ -215,16 +215,11 @@ if __name__=="__main__":
     model2.to(DEVICE)
     model3.to(DEVICE)
 
-    for inputs, labels in dataloaders["train"]:
-        inputs = inputs.to(DEVICE)
-        labels = labels.to(DEVICE)
-    
-        with torch.no_grad():
-            output1 = model1(inputs)
-            output2 = model2(inputs)
-            output3 = model3(inputs)
-        print(output1.size())
-        ot = torch.cat([output1,output2,output3],dim=1)
-        print(ot.size())
-        exit()
+    mdl = Ens(3).to(DEVICE)
+    optimizer = optim.Adam(mdl.parameters(), lr=0.001)
+    criterion = nn.CrossEntropyLoss()
+    exp_lr_scheduler = lr_scheduler.StepLR(optimizer, step_size=7, gamma=0.1)
+
+    model_ft, best_acc = train_model(mdl, model1,model2,model3, criterion, optimizer, exp_lr_scheduler,dataset_sizes,num_epochs=EPOCHS)
     # mdl = Ens(3)
+    
