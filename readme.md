@@ -1,8 +1,3 @@
-### Team members:
-+ Aanchal Jain - [github](https://github.com/AanchalJain369)</br>
-+ R Tharun Gowda - [github](https://github.com/rtharungowda)
-
-**Contest** - [Recognizance round 2](https://www.kaggle.com/c/recognizance-2/overview) </br>
 **Dataset** - [Power Lines Detection](https://www.kaggle.com/c/recognizance-2/data)
 
 ## Using Pytorch models
